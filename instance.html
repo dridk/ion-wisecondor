@@ -1,75 +1,151 @@
 
 <html>
-<head>
-<script type="text/javascript" src="/site_media/jquery/js/jquery-1.7.2.min.js">
-</script>
-</head> 
-
-<body>
-
-  CONFIG INSTANCE 
-  <!-- Le reste du contenu -->
-<div> 
+	<head>
+		<script type="text/javascript" src="/site_media/jquery/js/jquery-1.7.2.min.js">
+		</script>
 
 
+		<style media="screen" type="text/css">
 
-<form>
+			form {
+				width:100%;
+			}
 
-<h1></h1>
+			form select {
+				width:50%;
+				margin : 5px;
+			}
 
-<input id="postButton" type="submit" value="Submit"> 
-
-</form>
-
-
-<script type="text/javascript"> 
-$( document ).ready(function() {
-
-console.log("ion-wisecondor instance is ready");
+			form select#samples {
+				height : 200px;
+			}
 
 
+		</style>
+
+
+	</head> 
+
+	<body>
+
+		CONFIG INSTANCE 
+		<!-- Le reste du contenu -->
+		<div> 
+
+
+			<form id="myform">
+
+				<select id="refSelect" > </select>
+
+				<select id="genomSelect"> </select>
+
+
+				<select id="samples" name="bamList" multiple>
+				</select>
+				<br/>
+				<input type="submit" id="postButton">
+			</form>
+
+
+
+
+
+			<script type="text/javascript"> 
+				$( document ).ready(function() {
+
+						console.log("ion-wisecondor instance is ready");
+
+
+						// fill init form 
+
+						$.ajax({
+type:"GET",
+url:"/rundb/api/v1/results/"+ TB_result+ "/",
+contentType:"application/json;charset=utf-8",
+success: function(data) {
+expUrl = data["experiment"];
+console.debug(expUrl);
+$.ajax({
+	type:"GET",
+	url: expUrl,
+	contentType:"application/json;charset=utf-8",
+	success : function(data) {
+		// Get All Samples into select input 
+		console.debug("experiment");
+
+		var array ={};
+	    console.debug(data["eas_set"])	
+		$.each(data["eas_set"][0]["barcodedSamples"], function(index,value){
+
+			console.debug(index+":"+value["barcodes"][0]);			
+			var option = new Option(index, value["barcodes"][0]);
+			$("#samples").append(option);	
+
+	}); 
+
+}
+});
+
+
+
+
+}
+
+});
+
+
+//Serializer 
+function serializeForm(){
+
+   var x = $("#myform").serializeArray();
+
+   array = []
+
+   $.each(x, function (index, item) {
+			console.debug(item["value"]);
+			array.push(item["value"]);
+
+
+		   }) 
+   
+
+
+return array;
+
+}
+
+
+
+// Post Button action 
 $("#postButton").click(function() {
 
-    console.log("clicked...");
-
-    var obj = {"test":"sacha"};
- 
 
 
-    pluginAPIJSON = { "plugin" : [TB_plugin.fields.name], "pluginconfig" : obj};
-    pluginAPIJSON = JSON.stringify(pluginAPIJSON); 
+		//obj = serializeForm();
 
+		obj = {} 
+		obj["sacha"] = "schutz";
+		obj["items"] = serializeForm();
 
-    pluginURL = "/rundb/api/v1/results/" + TB_result + "/plugin/";
-console.log(pluginAPIJSON);
-console.log(pluginURL);
-// Launch now the plugin 
-
-
-
-$.ajax({
-        type: "POST",
-        url: pluginURL,
-	async:false,
-        contentType: "application/json; charset=utf-8",
-        success: function(data) {
-        console.log("Plugin has been launch");  
-        setTimeout("parent.$.fn.colorbox.close()" ,2000);
-	},
-	error : function(xhr, b, a ) {
-	console.log(xhr.status);
-	console.log(xhr.responseText);
-	},
-        data: pluginAPIJSON,
-        dataType: "json"
-    });	
-	
-
+		pluginAPIJSON = { "plugin" : [TB_plugin.fields.name], "pluginconfig" : obj };
+		pluginAPIJSON = JSON.stringify(pluginAPIJSON);
+		pluginURL = "/rundb/api/v1/results/" + TB_result + "/plugin/";
+		$.ajax({
+			type: 'POST',
+			url: pluginURL,
+			async: false,
+			contentType: "application/json; charset=utf-8",
+			data: pluginAPIJSON,
+			dataType: "json",
+			success: function(data)
+			{
+				console.debug("post successed");
+				setTimeout("parent.$.fn.colorbox.close()",2000);
+			}
+		});
 });
 
 });
-
-
 </script>
 
 </div>
