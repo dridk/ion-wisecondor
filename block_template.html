@@ -5,20 +5,47 @@
 	<link href="/site_media/resources/kendo/styles/kendo.common.min.css" rel="stylesheet">
 	<link href="/site_media/resources/less/kendo.tb.min.css" rel="stylesheet">
 	<link type="text/css" rel="stylesheet" href="/site_media/resources/styles/tb-styles.min.css">
+	<script type="text/javascript" src="/site_media/jquery/js/jquery-1.7.2.min.js"></script>
 
 	<style type="text/css">
 		p, ul{font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;}
-		.zebra {  background-color: #E1EFFA;}
-		.table_hover{    color: #009;    background-color: #6DBCEE;}
+		.zebra 			{  background-color: #E1EFFA;}
+		.table_hover 	{color: #009;background-color: #6DBCEE;}
+		.k-grid td  	{text-align: center;}
+		
+		.green 	{color:#39B54A;}
+		.orange	{color:#F7941D;}
+		.red	{color:#ED1C24;}
 
-		.k-grid td {
-			text-align: center;
-		}
 
 	</style>
 </head>
 
 <body style="background:white">
+
+	<script>
+	$( document ).ready(function() {
+
+	$('.zscore').each(function() {
+	var zscore =parseFloat($(this).text()) ;
+	console.debug(zscore);
+
+	if (zscore < 1.96) 
+		$(this).addClass('green');
+
+	if (zscore >= 1.96 && zscore < 1.96 * 2) 
+		$(this).addClass('orange');
+
+	if (zscore >= 1.96*2) 
+		$(this).addClass('red');
+    
+});
+
+	});
+
+
+
+	</script>
 
 
 	<table>
@@ -44,7 +71,10 @@
 				<tr>
 					<th><span class="help" title="Sample name">Barcode Name</span></th>
 					<th><span class="help" title="Number of called variants">Sample</span></th>
-					<th><span class="help" title="Results">Results</span></th>
+					<th><span class="help" title="Chrom21">chrom 21</span></th>
+					<th><span class="help" title="Chrom18">chrom 18</span></th>
+					<th><span class="help" title="Chrom13">chrom 13</span></th>
+
 					<th><span class="help" title="Download links">Download Links</span></th>
 
 				</tr>
@@ -59,7 +89,9 @@
 
 				<td>{{i.sample}}</td>
 
-				<td>sdfsdfsdfsdf</td>
+				<td class="zscore">{{i.s21}}</td>
+				<td class="zscore">{{i.s18}}</td>
+				<td class="zscore">{{i.s13}}</td>
 
 				<td style="text-align:center"><a class="btn" href="{{ i.pickle }}">PICKLE</a>
 					<a class="btn" href="{{ i.tested }}">TESTED</a>

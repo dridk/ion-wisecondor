@@ -1,7 +1,9 @@
 #!/bin/bash
-file_path=$1
-dest_path=$2
-plugin_path=$3
+
+
+file_path=$1									# BAM file path which you want to test 
+dest_path=$2									# Destination folder where results will be stored
+plugin_path=$3									# wisecondor parent PATH to run script from anywhere
 filename=`basename $file_path`
 basename=${filename%.*}
 

@@ -6,7 +6,7 @@ import json
 import subprocess 
 from multiprocessing.pool import Pool
 import glob 
-
+import pickle
 from django.template import Context, Template
 from django.conf import settings
 settings.configure()
@@ -19,29 +19,18 @@ class IonWisecondor(IonPlugin):
 	envDict = dict(os.environ)
 		
 	
-
-
 	def launch(self, data=None):
 		print("Launch started...")
 
-		#For debugging... 
-		if "RESULTS_DIR" not in os.environ:
-			self.outputDir = "/home/ionadmin/result_dir"
-			self.rootDir="/home/ionadmin/root_dir"
-		else:
-			self.outputDir = os.environ["RESULTS_DIR"];  # The wisecondor results directory
-			self.analysisDir = os.environ["ANALYSIS_DIR"];
-			self.pluginDir = os.environ["PLUGIN_PATH"];
-			self.urlRoot = os.environ["URL_ROOT"]   # /output/Home/X/
-			self.urlPlugin = os.environ["TSP_URLPATH_PLUGIN_DIR"] # /output/Home/X/plugin_out/IonWisecondor
+	
+		# ================ GET GLOBAL PATH
+		self.outputDir 		= os.environ["RESULTS_DIR"];  # The wisecondor results directory
+		self.analysisDir 	= os.environ["ANALYSIS_DIR"];
+		self.pluginDir		= os.environ["PLUGIN_PATH"];
+		self.urlRoot 		= os.environ["URL_ROOT"]   # /output/Home/X/
+		self.urlPlugin 		= os.environ["TSP_URLPATH_PLUGIN_DIR"] # /output/Home/X/plugin_out/IonWisecondor
 
-
-
-			print(os.environ["PLUGINCONFIG__COUNT"])
-
-			
-
-		#=================Set files dictionnary to send to html report template 
+		# ================ GET INSTANCE PARAMETERS AND STORE THEM IN A LIST 
 		fileCount = int(os.environ["PLUGINCONFIG__COUNT"])
 		files = []
 		for i in range(fileCount):
@@ -55,7 +44,6 @@ class IonWisecondor(IonPlugin):
 			item["barcode"] = barcode
  			item["key"]  	= key
 			item["path"] 	= path 
-			# item["name"] = os.path.splitext(os.path.basename(path))[0]
 			item["pickle"] 	= self.urlPlugin + "/" + barcode +"_rawlib.pickle" 
 			item["gcc"] 	= self.urlPlugin + "/" + barcode +"_rawlib.gcc" 
 			item["tested"] 	= self.urlPlugin + "/" + barcode +"_rawlib.tested" 
@@ -63,30 +51,56 @@ class IonWisecondor(IonPlugin):
 
  			files.append(item)
 
-		# ====================Start Computation 
-
+		# ================ LOOP ON EACH FILES AND START COMPUTATION 
 		for item in files:
+			# Launch run.sh 
 			cmd = self.pluginDir+"/run.sh %s %s %s" % (item["path"], self.outputDir, self.pluginDir)
-			print(cmd)
 			p1 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 			stdout, stderr = p1.communicate()
-
+			# Check error
 			if p1.returncode == 0:
+				# Compute average of zSmoothDict from barcode_rawlib.tested
+
+				filePath = os.environ["RESULTS_DIR"] + "/" + item["barcode"] + "_rawlib.tested" 
+
+				item["s21"] = self.scoreOf(filePath, "21")
+				item["s18"] = self.scoreOf(filePath, "18")
+				item["s13"] = self.scoreOf(filePath, "13")
+
 				print(stdout)
 			else:
 				raise Exception(stderr)
 
-		# ====================Generate HTML
+
+
+
+
+
+
+		# ================ GENERATE RESULTS HTML FROM DJANGO TEMPLATE SYSTEM
 
 		source = open(os.environ["RUNINFO__PLUGIN__PATH"] + "/block_template.html", "r").read()
 		t = Template(source)
+		# Pass files arguments to the template 
 		c = Context({'files': files})
 		html = t.render(c)
-
+		# Output html render 
 		f = open(self.outputDir+"/resultat_block.html","w")
 		f.write(html)
 		f.close()
 
+
+	def scoreOf(self, testedFile, chrom):
+		with open(testedFile) as file:
+			data 	= pickle.loads(file.read())
+			zScores = data["zSmoothDict"][chrom]
+			score   = -1
+			try:
+				score = sum(zScores) / len(zScores)
+			except :
+				score = -1
+
+		return round(score,2)
 
 
 
