@@ -13,7 +13,7 @@ settings.configure()
 
 
 class IonWisecondor(IonPlugin):
-	version = "1.0"
+	version = "0.1"
 	allow_autorun = False
 	author = "sacha@labsquare.org"
 	envDict = dict(os.environ)
