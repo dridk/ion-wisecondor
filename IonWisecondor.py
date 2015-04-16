@@ -3,78 +3,89 @@ from ion.plugin import *
 import os
 import sys
 import json 
-from subprocess import *
+import subprocess 
 from multiprocessing.pool import Pool
-from django.conf import settings
-from django import template
 import glob 
+
+from django.template import Context, Template
+from django.conf import settings
+settings.configure()
+
 
 class IonWisecondor(IonPlugin):
 	version = "1.0"
 	allow_autorun = False
+	author = "sacha@labsquare.org"
 	envDict = dict(os.environ)
 		
 	
 
 
 	def launch(self, data=None):
-		print("bein alors ???")
+		print("Launch started...")
 
 		#For debugging... 
 		if "RESULTS_DIR" not in os.environ:
 			self.outputDir = "/home/ionadmin/result_dir"
 			self.rootDir="/home/ionadmin/root_dir"
 		else:
-			self.outputDir = os.environ["RESULTS_DIR"];
-			self.rootDir = os.environ["REPORT_ROOT_DIR"];
-			self.analysisName = os.environ["TSP_ANALYSIS_NAME"];
-	# Retrive instance parameter sended 		
-		try:
-			with open('startplugin.json', 'r') as fh:
-				self.json_data = json.load(fh)
-				self.filenames = self.json_data["pluginconfig"]["items"]
-				#self.filenames = [self.rootDir+"/"+name+"_rawlib.bam" for name in self.filenames]	
-				print(self.filenames)
-		except:
-			print 'Error reading plugin json.'
+			self.outputDir = os.environ["RESULTS_DIR"];  # The wisecondor results directory
+			self.analysisDir = os.environ["ANALYSIS_DIR"];
+			self.pluginDir = os.environ["PLUGIN_PATH"];
+			self.urlRoot = os.environ["URL_ROOT"]   # /output/Home/X/
+			self.urlPlugin = os.environ["TSP_URLPATH_PLUGIN_DIR"] # /output/Home/X/plugin_out/IonWisecondor
 
 
-	#Create html report 
-		
-		if not os.path.isdir(self.outputDir):
-			print("le dossier n'existe pas...")
-			os.makedirs(self.outputDir)
-		
-#		settings.configure()
-#	
-#		#load result page
-#		t = template.Template('My name is {{ name }}.')
-#		c = template.Context({'name': 'Adrian'})
-#		print t.render(c)
-#		htmlFile = self.outputDir+"/resultat.html"
-#		f = open(htmlFile,"w");
-#		f.write(t.render(c))
-#		f.close()
-#
 
-		html = "<html><body>"
-		for file in glob.glob("/results/analysis/output/Home/wisecondor/*.pdf"):
-			basename = os.path.basename(file)
-			if self.analysisName in basename:
-				for barcode in self.filenames:
-					if barcode in basename:
-						html+= "<img src='/site_media/img/gnome-pdf.png'/><a href='/output/Home/wisecondor/"+ basename +"' target='_blank'>"+basename+"</a><br/>"
-		
+			print(os.environ["PLUGINCONFIG__COUNT"])
 
-		html += "</body></html>"
-		print(html)
-		#load block page 
+			
+
+		#=================Set files dictionnary to send to html report template 
+		fileCount = int(os.environ["PLUGINCONFIG__COUNT"])
+		files = []
+		for i in range(fileCount):
+			item       	= {}
+			key        	= "PLUGINCONFIG__ITEMS__"+str(i)
+			barcode    	= os.environ[key+"__BARCODE"]
+			sample	   	= os.environ[key+"__SAMPLE"]
+			path 		= self.analysisDir +"/" + barcode + "_rawlib.bam"
+
+			item["sample"] 	= sample
+			item["barcode"] = barcode
+ 			item["key"]  	= key
+			item["path"] 	= path 
+			# item["name"] = os.path.splitext(os.path.basename(path))[0]
+			item["pickle"] 	= self.urlPlugin + "/" + barcode +"_rawlib.pickle" 
+			item["gcc"] 	= self.urlPlugin + "/" + barcode +"_rawlib.gcc" 
+			item["tested"] 	= self.urlPlugin + "/" + barcode +"_rawlib.tested" 
+			item["pdf"] 	= self.urlPlugin + "/" + barcode +"_rawlib.pdf" 
+
+ 			files.append(item)
+
+		# ====================Start Computation 
+
+		for item in files:
+			cmd = self.pluginDir+"/run.sh %s %s %s" % (item["path"], self.outputDir, self.pluginDir)
+			print(cmd)
+			p1 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+			stdout, stderr = p1.communicate()
+
+			if p1.returncode == 0:
+				print(stdout)
+			else:
+				raise Exception(stderr)
+
+		# ====================Generate HTML
+
+		source = open(os.environ["RUNINFO__PLUGIN__PATH"] + "/block_template.html", "r").read()
+		t = Template(source)
+		c = Context({'files': files})
+		html = t.render(c)
+
 		f = open(self.outputDir+"/resultat_block.html","w")
 		f.write(html)
 		f.close()
-
-
-
 
 
 
