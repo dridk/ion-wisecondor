@@ -1,18 +1,17 @@
 #!/bin/bash
 
-
-file_path=$1									# BAM file path which you want to test 
-dest_path=$2									# Destination folder where results will be stored
-plugin_path=$3									# wisecondor parent PATH to run script from anywhere
-sample_name=$4                                                                  # Sample name
-run_date=$5                                                                     # date of the run sequencing
+file_path=$1					# BAM file path which you want to test 
+dest_path=$2					# Destination folder where results will be stored
+plugin_path=$3					# wisecondor parent PATH to run script from anywhere
+sample_name=$4                                  # Sample name
+run_date=$5                                     # date of the run sequencing
 filename=`basename $file_path`
 basename=${filename%.*}
 
 
 # echo $filename TO $basename.pickle
 echo pickle > $2/$sample_name.pickle
-samtools view $file_path | python $3/wisecondor/consam.py $2/$sample_name.pickle
+samtools view $file_path -q 1 | python $3/wisecondor/consam.py -outfile $2/$sample_name.pickle
 
 # echo $basename.pickle TO $basename.gcc
 echo gcc > $2/$sample_name.gcc
