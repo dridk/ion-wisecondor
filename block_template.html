@@ -1,107 +1,75 @@
 <html lang="en">
 <head>
-	<base target="_parent"/>
-	<link rel="stylesheet" media="all" href="/site_media/resources/bootstrap/css/bootstrap.min.css">
-	<link href="/site_media/resources/kendo/styles/kendo.common.min.css" rel="stylesheet">
-	<link href="/site_media/resources/less/kendo.tb.min.css" rel="stylesheet">
-	<link type="text/css" rel="stylesheet" href="/site_media/resources/styles/tb-styles.min.css">
-	<script type="text/javascript" src="/site_media/jquery/js/jquery-1.7.2.min.js"></script>
-
-	<style type="text/css">
-		p, ul{font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;}
-		.zebra 			{  background-color: #E1EFFA;}
-		.table_hover 	{color: #009;background-color: #6DBCEE;}
-		.k-grid td  	{text-align: center;}
-		
-		.green 	{color:#39B54A;}
-		.orange	{color:#F7941D;}
-		.red	{color:#ED1C24;}
-
-
-	</style>
+    <base target="_parent"/>
+    <link rel="stylesheet" media="all" href="/site_media/resources/bootstrap/css/bootstrap.min.css">
+    <link href="/site_media/resources/kendo/styles/kendo.common.min.css" rel="stylesheet">
+    <link href="/site_media/resources/less/kendo.tb.min.css" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="/site_media/resources/styles/tb-styles.min.css">
+    <script type="text/javascript" src="/site_media/jquery/js/jquery-1.7.2.min.js"></script>
+    <style type="text/css">
+        p, ul{font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;}
+        .zebra 			{  background-color: #E1EFFA;}
+        .table_hover 	{color: #009;background-color: #6DBCEE;}
+        .k-grid td  	{text-align: center;}
+        .green 	{color:#39B54A;}
+        .orange	{color:#F7941D;}
+        .red	{color:#ED1C24;}
+    </style>
 </head>
 
 <body style="background:white">
-
-	<script>
-	$( document ).ready(function() {
-
-	$('.zscore').each(function() {
-	var zscore =parseFloat($(this).text()) ;
-	console.debug(zscore);
-
-	if (zscore < 1.96) 
-		$(this).addClass('green');
-
-	if (zscore >= 1.96 && zscore < 1.96 * 2) 
-		$(this).addClass('orange');
-
-	if (zscore >= 1.96*2) 
-		$(this).addClass('red');
     
-});
-
+    <script>
+    $( document ).ready(function() {
+        $('.zscore').each(function() {
+            var zscore =parseFloat($(this).text()) ;
+            console.debug(zscore);
+            if (zscore < 1.96) 
+            $(this).addClass('green');
+            if (zscore >= 1.96 && zscore < 1.96 * 2) 
+            $(this).addClass('orange');
+            if (zscore >= 1.96*2) 
+            $(this).addClass('red');
+            });
 	});
-
-
-
-	</script>
-
-
-	<table>
-		<tr><td>Wisecondor version 0.1</td>	<td>0.1</td></tr>
-		<tr><td>Genome reference:</td>			<td>Hg19</td></tr>
-		<tr><td>Table reference:</td>			<td>reftable</td></tr>
-		</tr>
-	<!-- 	<tr><td>Download all barcodes:</td> 	
-		<td >
-			<a class="btn" href="R_2015_02_10_10_41_58_user_GRO-51-DANNI_serie63-67_20150210.vcf.zip">VCF.ZIP</a>
-			<a class="btn" href="R_2015_02_10_10_41_58_user_GRO-51-DANNI_serie63-67_20150210.xls.zip">XLS.ZIP</a>
-			<a class="btn" href="R_2015_02_10_10_41_58_user_GRO-51-DANNI_serie63-67_20150210.xls">XLS</a>
-		</td>
-	</tr> -->
-
-
-
-
-	</table>
-	<div class="k-widget k-grid">
-		<table class="table-striped">
-			<thead class="k-grid-header">
-				<tr>
-					<th><span class="help" title="Sample name">Barcode Name</span></th>
-					<th><span class="help" title="Number of called variants">Sample</span></th>
-					<th><span class="help" title="Chrom21">chrom 21</span></th>
-					<th><span class="help" title="Chrom18">chrom 18</span></th>
-					<th><span class="help" title="Chrom13">chrom 13</span></th>
-
-					<th><span class="help" title="Download links">Download Links</span></th>
-
-				</tr>
-			</thead>
-
-
-{% for i in files %}
-			<tr>
-				<td style="text-align:left"><a href="IonXpress_001/variantCaller.html">
-					<span title="">{{i.barcode}}</span></a>
-				</td>
-
-				<td>{{i.sample}}</td>
-
-				<td class="zscore">{{i.s21}}</td>
-				<td class="zscore">{{i.s18}}</td>
-				<td class="zscore">{{i.s13}}</td>
-
-				<td style="text-align:center"><a class="btn" href="{{ i.pickle }}">PICKLE</a>
-					<a class="btn" href="{{ i.tested }}">TESTED</a>
-					<a class="btn  btn-primary " href="{{ i.pdf }}">DOWNLAD PDF</a>
-				</td>
-
-			</tr>
-{% endfor %}
-
-		</table>
-	</div>
+    </script>
+    <table>
+        <tr>
+            <td>Wisecondor version: </td>
+            <td>2.0</td>
+        </tr>
+        <tr>
+            <td>Genome reference:</td>
+            <td>Hg19</td>
+        </tr>
+    </table>
+    <div class="k-widget k-grid">
+        <table class="table-striped">
+            <thead class="k-grid-header">
+                <tr>
+                    <th><span class="help" title="Barcode name">Barcode Name</span></th>
+                    <th><span class="help" title="Sample name">Sample</span></th>
+                    <th><span class="help" title="Chromosome 21">chrom 21</span></th>
+                    <th><span class="help" title="Chromosome 18">chrom 18</span></th>
+                    <th><span class="help" title="Chromosome 13">chrom 13</span></th>
+                    <th><span class="help" title="Download links">Download Links</span></th>
+                </tr>
+            </thead>
+            {% for i in files %}
+            <tr>
+                <td style="text-align:left">{{i.barcode}}</td>
+                <td>{{i.sample}}</td>
+                <td class="zscore">{{i.s21}}</td>
+                <td class="zscore">{{i.s18}}</td>
+                <td class="zscore">{{i.s13}}</td>
+                <td style="text-align:center">
+                    <a class="btn" href="{{ i.pickle }}">PICKLE</a>
+                    <a class="btn" href="{{ i.tested }}">TESTED</a>
+                    <a class="btn  btn-primary " href="{{ i.pdf }}">DOWNLOAD PDF</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
 </body>
 </html>
