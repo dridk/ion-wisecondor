@@ -12,7 +12,7 @@ from django.conf import settings
 
 class IonWisecondor(IonPlugin):
 	""" IonWisecondor """
-	version = "1.0.1"
+	version = "2.0"
 	allow_autorun = False
 	author = "sacha@labsquare.org"
 	envDict = dict(os.environ)

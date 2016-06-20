@@ -34,6 +34,8 @@ import cutoff
 import matplotlib
 import argparse
 
+import warnings
+
 numpy.seterr('ignore')
 
 binSize = 0
@@ -97,6 +99,7 @@ def markBins(sample,maxRounds,minBins,maxBins,maxDist,smoothRange):
 	zScoresDict = dict()
 	zSmoothDict = dict()
 	blindsDict = dict()
+	refsDict = dict()
 	
 	while ([marked[:2] for marked in prevMarks] != [marked[:2] for marked in markedBins]) and rounds <= maxRounds:
 		print '\tRound: ' + str(rounds) + '\tMarks: ' + str(len(markedBins))
@@ -111,6 +114,7 @@ def markBins(sample,maxRounds,minBins,maxBins,maxDist,smoothRange):
 			endBin = 0
 			zScores = []
 			blinds = []
+			refs = []
 			chromFound = 0
 			avgBins = 0
 			average = 0
@@ -131,9 +135,11 @@ def markBins(sample,maxRounds,minBins,maxBins,maxDist,smoothRange):
 					markedBins.append([chrom,bin,zValue])
 
 				zScores.append(zValue)
+				refs.append(reference)
 
 			zScoresDict[str(chrom)] = zScores
 			blindsDict[str(chrom)] = blinds
+			refsDict[str(chrom)] = refs
 
 	print 'Stopped\tMarks: ' + str(len(markedBins))
 
@@ -156,7 +162,7 @@ def markBins(sample,maxRounds,minBins,maxBins,maxDist,smoothRange):
 				markedSmoothBins.append([chrom,bin,zSmooth[bin]])
 
 	markedBins.sort()
-	return markedBins, zScoresDict, markedSmoothBins, zSmoothDict, blindsDict
+	return markedBins, zScoresDict, markedSmoothBins, zSmoothDict, blindsDict, refsDict
 
 # TODO: Only give multi for enough reference bins, otherwise nan?
 def getMulti(sample,chrom,start,end):
@@ -264,7 +270,13 @@ def testTrisomyStoufferDirect(zScoresDict):
 		stouff.append((numpy.sum(temp)/numpy.sqrt(len(temp))))
 	for chromInt in range(22):
 		if abs(stouff[chromInt]) > 3:
-			print "\tChr" + str(chromInt+1) + "\t" + str(stouff[chromInt])
+			chromMulti=[]
+			for i in range(len(sample[str(chromInt+1)])-1):
+				if i not in blindsDict[str(chromInt+1)]:
+					chromMulti.append(getMulti(sample,chromInt+1,i,i+1))
+				#else:
+				#	print i
+			print "\tChr" + str(chromInt+1) + "\t" + str(stouff[chromInt]) + "\t" + str(numpy.average(chromMulti))
 
 # --- MAIN ---
 import argparse
@@ -309,6 +321,9 @@ parser.add_argument('-wminbins', default=10, type=int,
 
 parser.add_argument('-trithres', default=0.5, type=float,
 					help='threshold value for determining aneuploidy')
+					
+parser.add_argument('-ignorerefchr', default='', type=str,
+                   help='ignore specified chromosome in the reference to rule out its influences on target bins')
 
 args = parser.parse_args()
 
@@ -333,10 +348,27 @@ print '\nDetermining reference cutoffs'
 maxDist = cutoff.getOptimalCutoff(lookUpTable, args.refmaxrep, args.refmaxval)
 
 print '\tCutoff determined:\t' + str(maxDist)
+
+if args.ignorerefchr !='' :
+	print '\nRemoving chromosome from references:\t' + args.ignorerefchr
+	removeCount=0
+
+	for chrom in lookUpTable.keys():
+		curChrom=lookUpTable[chrom]
+		for i,curTarBin in enumerate(curChrom):
+			for j in range(len(curTarBin)-1,-1,-1):
+				#print curTarBin[j]
+				if curTarBin[j][0] == args.ignorerefchr:
+					removeCount+=1
+					curTarBin.pop(j)
+	print '\tRemoved:\t'+str(removeCount)+'\toccurrences of\t'+args.ignorerefchr
+
 print ''
-avgDev = checkAverageDeviation(sample,args.refminbin,args.refmaxbin,maxDist)
-markedBins,zScoresDict,markedSmoothBins,zSmoothDict,blindsDict = \
-	markBins(sample,args.maxrounds,args.refminbin,args.refmaxbin,maxDist,args.window)
+with warnings.catch_warnings():
+	warnings.simplefilter("ignore")
+	avgDev = checkAverageDeviation(sample,args.refminbin,args.refmaxbin,maxDist)
+	markedBins,zScoresDict,markedSmoothBins,zSmoothDict,blindsDict,refsDict = \
+		markBins(sample,args.maxrounds,args.refminbin,args.refmaxbin,maxDist,args.window)
 
 print '\nUncallable bins:\t' + str(sum([len(blindsDict[key]) for key in blindsDict.keys()]) \
 		/float(sum([len(sample[key]) for key in sample.keys()]))*100)[:5] + '%'
@@ -362,10 +394,25 @@ testTrisomyStoufferDirect(zScoresDict)
 print '\n\n# Script information:\n'
 print '\nComputing additional data for plots'
 wastedBins = dict()
+
+refMeans = dict()
+refStds = dict()
 for chrom in range(1,23):
 	wastedBins[str(chrom)] = []
 	for bin in range(len(sample[str(chrom)])-1):
 		wastedBins[str(chrom)].append(len(getReference(sample,str(chrom),bin,[],0,4,1)) <= 3)
+
+	refMean=[]
+	refStdD=[]
+	for reference in refsDict[str(chrom)]:
+		if reference != []:
+			refMean.append(numpy.average(reference))
+			refStdD.append(numpy.std(reference))
+		else:
+			refMean.append(1)
+			refStdD.append(0)
+	refMeans[str(chrom)] = refMean
+	refStds[str(chrom)] = refStdD
 
 print '\nStoring data for creating plots'
 outputData=dict()
@@ -378,6 +425,46 @@ outputData['zScoresDict']=zScoresDict
 outputData['zSmoothDict']=zSmoothDict
 outputData['blindsDict']=blindsDict
 outputData['wastedBins']=wastedBins
+outputData['refsDict']=refsDict
+outputData['refMeans']=refMeans
+outputData['refStds']=refStds
 pickle.dump(outputData,open(args.outfile,'wb'))
 
+print '\nAdditional information to determine possible maternal peaks'
+extMarkedBins=[]
+
+if len(markedBins)>0:
+	print "Chr\tBin\tZ-Score\tMult\tPerc"
+	for i,val in enumerate(markedBins):
+		multi=getMulti(sample,val[0],val[1],val[1])
+		extVal=val[:]
+		extVal.append(multi)
+		extMarkedBins.append(extVal)
+		print "\t".join([str(x) for x in extVal])+"\t"+str(int(abs(extVal[3]-1)*200))
+
+def getMaternalGuess(curSpike):
+	if len(curSpike)>1:
+		spikeMax=max([abs(x[3]-1) for x in curSpike])
+		#print spikeMax,curSpike
+		start	= int((curSpike[ 0][1]+1-abs(curSpike[-1][3]-1)*2)*args.binsize)
+		end		= int((curSpike[-1][1]+abs(curSpike[-1][3]-1)*2)*args.binsize)
+		print "Without correction:\t"+str(curSpike[0][0])+":"+str(start)+"-"+str(end)+"\tSize: "+str(end-start)
+		if len(curSpike)>2:
+			corrector=1/spikeMax
+			#print [(x[3]-1)*corrector for x in curSpike]
+			corStart	=	int((curSpike[ 0][1]+1-abs(curSpike[-1][3]-1)*corrector)*args.binsize)
+			corEnd		=	int((curSpike[-1][1]+abs(curSpike[-1][3]-1)*corrector)*args.binsize)
+			corLen		=	corEnd-corStart
+			print "\tCorrection:\t"+str(curSpike[0][0])+":"+str(corStart)+"-"+str(corEnd)+"\tSize: "+str(corLen)
+
+if len(extMarkedBins)>1:
+	curSpike=[extMarkedBins[0]]
+	for i,val in enumerate(extMarkedBins[1:]):
+		if val[0] == curSpike[-1][0] and val[1] == curSpike[-1][1]+1:
+			curSpike.append(val)
+		else:
+			getMaternalGuess(curSpike)
+			curSpike=[val]
+	getMaternalGuess(curSpike)
+			
 print '\n# Finished'
