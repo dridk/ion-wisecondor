@@ -38,6 +38,8 @@ class IonWisecondor(IonPlugin):
 			sample	   	= os.environ[key+"__SAMPLE"]
 			input 		= self.analysisDir +"/" + barcode + "_rawlib.bam"
 			
+			sample = sample.replace(' ', '_')
+			
 			item["sample"] 	= sample
 			item["barcode"] = barcode
 			item["key"]  	= key
