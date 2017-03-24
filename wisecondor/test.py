@@ -46,7 +46,7 @@ def getZScore(value, reference):
 	average	= numpy.average(reference)
 	stddev	= numpy.std(reference)
 
-	if stddev == 0:
+	if len(reference) == 0 or stddev == 0:
 		return 0
 
 	Z = (value - average) / stddev

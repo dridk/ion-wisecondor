@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="fr">
+<head>
+	<meta charset="utf-8">
+	<title>Wisecondor configuration</title>
+	<link rel="stylesheet" media="all" href="/site_media/resources/bootstrap/css/bootstrap.min.css"/>
+	<link href="/site_media/resources/kendo/styles/kendo.common.min.css" rel="stylesheet"/>
+	<link href="/site_media/resources/less/kendo.tb.min.css" rel="stylesheet"/>
+	<link type="text/css" rel="stylesheet" href="/site_media/resources/styles/tb-layout.css"/>
+	<link type="text/css" rel="stylesheet" href="/site_media/resources/styles/tb-styles.min.css"/>
+	<script src="/site_media/resources/jquery/jquery-1.8.2.min.js"></script>
+	<script src="/site_media/resources/scripts/tb.jquery.min.js"></script>
+	<script src="/site_media/js/json2.min.js"></script>
+	<script src="/site_media/resources/bootstrap/js/bootstrap.min.js"></script>
+	<script src="script.js"></script>
+
+	<style>
+		body {
+			/*the first height has to be the max height size for the iFrame plugin */
+			height: 755px;
+			background: #FFFFFF;
+		}
+		.nameCol {
+			width:555px;
+		}
+		.smallCol {
+			width: 200px;
+		}
+		.container {
+			float: none;
+			margin-left: auto;
+			margin-right: auto;
+		}
+		.table {
+			margin-bottom: 0px;
+		}
+	</style>
+</head>
+<body>
+	<div id="main" class="container">
+		<div class="row topSpace">
+			<div class="span12 k-widget k-grid" id="table-wrap">
+				<table class="table table-striped">
+					<thead class="k-grid-header">
+						<tr>
+							<th class="k-header nameCol">Properties</th>
+							<th class="k-header smallCol">Values</th>
+						</tr>
+					</thead>
+					<tbody id="table-body">
+					<!-- First line -->
+					<tr>
+						<td class="nameCol"><strong>Select genom reference</strong></td>
+						<td class="smallCol centerCol"><select id="genomBox"></select></td>
+					</tr>
+					<!-- Second line -->
+					<tr>
+						<td class="nameCol"><strong>Select reference table</strong></td>
+						<td class="smallCol centerCol"><select id="refTable"></select></td>
+					</tr>
+				</tbody>
+					</table>
+				</div>
+			<div class="span12 modal-button-row k-grid">
+                <span class="btn pull-right update"><i class="icon-ok"></i> Save all</span>
+			</div>
+		</div>
+	</div>
+	
+		<script>
+			$(document).ready(function(){
+				alert("document ready")
+				var genomBox = $("#genomBox")
+				 $.getJSON( "/rundb/api/v1/referencegenome/?format=json", function( data ) {
+					var items = data.objects
+					$.each( items , function( index ) {
+					console.debug(items[index].name)
+					genomBox.append($("<option />").val(3).text(items[index].name))
+					});
+				});
+			/*	$("#comboBox").kendoComboBox({
+						index : 0,
+						dataTextField:"name",
+						dataValueField:"id",
+						dataSource: {
+							transport: {
+								read: {
+				          		url: "http://10.67.70.58/rundb/api/v1/referencegenome/?format=json",
+	            				type: "get",
+	            				dataType: "json"
+	            			}
+   					 	},
+    						schema: {data: "objects"}
+						}
+					});*/
+			}); // End Document ready
+		</script>
+</body>
+</html>

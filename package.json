@@ -1,0 +1,10 @@
+	{
+	"screenshot": "",
+ 	"torrent_server_version_name": "4.4",
+ 	"documentation": "",
+ 	"plugin_name": "IonWisecondor",
+    "short_description": "wisecondor plugin for Ion torrent",
+    "version_name": "0.1.1", 
+    "long_description": "wisecondor plugin for Ion torrent allow you to detect trisomy 21, 18 and 13 from maternal DNA", 
+    "icon": ""
+  }
