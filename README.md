@@ -1,4 +1,4 @@
 ion-wisecondor
 ==============
-
-Life ion torrent plugin using wisecondor
+This project has been moved to: 
+https://github.com/AllanSSX/IonNIPT
